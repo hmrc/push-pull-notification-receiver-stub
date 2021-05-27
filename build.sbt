@@ -3,24 +3,18 @@ import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin.publishingSettings
 
 val appName = "push-pull-notification-receiver-stub"
 
-val silencerVersion = "1.7.3"
-
 lazy val microservice = Project(appName, file("."))
   .enablePlugins(play.sbt.PlayScala, SbtAutoBuildPlugin, SbtGitVersioning, SbtDistributablesPlugin)
-  .settings(
-    majorVersion                     := 0,
-    scalaVersion                     := "2.12.13",
-    libraryDependencies              ++= AppDependencies.compile ++ AppDependencies.test,
-    // ***************
-    // Use the silencer plugin to suppress warnings
-    scalacOptions += "-P:silencer:pathFilters=routes",
-    libraryDependencies ++= Seq(
-      compilerPlugin("com.github.ghik" % "silencer-plugin" % silencerVersion cross CrossVersion.full),
-      "com.github.ghik" % "silencer-lib" % silencerVersion % Provided cross CrossVersion.full
-    )
-    // ***************
-  )
-  .settings(publishingSettings: _*)
   .configs(IntegrationTest)
+  .settings(publishingSettings: _*)
   .settings(integrationTestSettings(): _*)
-  .settings(resolvers += Resolver.jcenterRepo)
+  .settings(inConfig(IntegrationTest)(ScalafmtPlugin.scalafmtConfigSettings))
+  .settings(
+    majorVersion := 0,
+    scalaVersion := "2.12.13",
+    resolvers += Resolver.jcenterRepo,
+    libraryDependencies ++= AppDependencies.compile ++ AppDependencies.test,
+    scalacOptions += "-Wconf:src=routes/.*:silent",
+    scalacOptions ~= { opts => opts.filterNot(Set("-Xlint")) },
+    scalacOptions ~= { opts => opts.filterNot(_.startsWith("-Ywarn-unused")) }
+  )
