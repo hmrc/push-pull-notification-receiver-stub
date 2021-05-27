@@ -15,20 +15,23 @@ lazy val microservice = Project(appName, file("."))
   .settings(inConfig(Test)(testReportSettings))
   .settings(inConfig(IntegrationTest)(testReportSettings))
   .settings(inConfig(IntegrationTest)(ScalafmtPlugin.scalafmtConfigSettings))
+  .settings(scalacSettings)
   .settings(scoverageSettings)
   .settings(
     majorVersion := 0,
     scalaVersion := "2.12.13",
     resolvers += Resolver.jcenterRepo,
-    libraryDependencies ++= AppDependencies.compile ++ AppDependencies.test,
-    scalacOptions += "-Wconf:src=routes/.*:silent",
-    scalacOptions ~= { opts => opts.filterNot(Set("-Xlint")) },
-    scalacOptions ~= { opts => opts.filterNot(_.startsWith("-Ywarn-unused")) }
+    libraryDependencies ++= AppDependencies.compile ++ AppDependencies.test
   )
+
+lazy val scalacSettings = Def.settings(
+  scalacOptions += "-Wconf:src=routes/.*:silent",
+  scalacOptions ~= { opts => opts.filterNot(Set("-Xlint")) },
+  scalacOptions ~= { opts => opts.filterNot(_.startsWith("-Ywarn-unused")) }
+)
 
 // Scoverage exclusions and minimums
 lazy val scoverageSettings = Def.settings(
-  Test / parallelExecution := false,
   ScoverageKeys.coverageMinimumStmtTotal := 95,
   ScoverageKeys.coverageFailOnMinimum := true,
   ScoverageKeys.coverageHighlighting := true,
@@ -46,7 +49,8 @@ lazy val scoverageSettings = Def.settings(
   ).mkString(";")
 )
 
-val testReportSettings = Def.settings(
+// Disable test reports outside of CI
+lazy val testReportSettings = Def.settings(
   testOptions ~= { opts =>
     if (sys.env.get("JENKINS_HOME").nonEmpty) {
       opts
