@@ -25,9 +25,9 @@ import play.api.libs.json.JsonValidationError
 sealed abstract class NotificationStatus(val name: String) extends Product with Serializable
 
 object NotificationStatus {
-  case object Pending extends NotificationStatus("PENDING")
+  case object Pending      extends NotificationStatus("PENDING")
   case object Acknowledged extends NotificationStatus("ACKNOWLEDGED")
-  case object Failed extends NotificationStatus("FAILED")
+  case object Failed       extends NotificationStatus("FAILED")
 
   val values = Set(Pending, Acknowledged, Failed)
 

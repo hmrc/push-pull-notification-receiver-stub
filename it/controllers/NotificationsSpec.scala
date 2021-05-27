@@ -33,7 +33,13 @@ import play.api.http.ContentTypes
 import play.api.mvc.Headers
 import play.api.http.HeaderNames
 
-class NotificationsSpec extends AnyWordSpec with Matchers with GuiceOneServerPerSuite with WiremockSuite with FutureAwaits with DefaultAwaitTimeout {
+class NotificationsSpec
+    extends AnyWordSpec
+    with Matchers
+    with GuiceOneServerPerSuite
+    with WiremockSuite
+    with FutureAwaits
+    with DefaultAwaitTimeout {
   override protected def portConfigKeys: Seq[String] = Seq.empty
 
   lazy val ws: WSClient = app.injector.instanceOf[WSClient]
@@ -57,12 +63,13 @@ class NotificationsSpec extends AnyWordSpec with Matchers with GuiceOneServerPer
           .post(
             Json.stringify(
               Json.obj(
-                "notificationId" -> UUID.randomUUID.toString,
-                "boxId" -> UUID.randomUUID.toString,
-                "status" -> "ACKNOWLEDGED",
+                "notificationId"     -> UUID.randomUUID.toString,
+                "boxId"              -> UUID.randomUUID.toString,
+                "status"             -> "ACKNOWLEDGED",
                 "messageContentType" -> "application/json",
-                "message" -> """{"key":"value"}""",
-                "createdDateTime" -> DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(OffsetDateTime.now)
+                "message"            -> """{"key":"value"}""",
+                "createdDateTime" -> DateTimeFormatter.ISO_OFFSET_DATE_TIME
+                  .format(OffsetDateTime.now)
               )
             )
           )
@@ -77,11 +84,11 @@ class NotificationsSpec extends AnyWordSpec with Matchers with GuiceOneServerPer
           .post(
             Json.stringify(
               Json.obj(
-                "notificationId" -> UUID.randomUUID.toString,
-                "boxId" -> UUID.randomUUID.toString,
-                "status" -> "ACKNOWLEDGED",
+                "notificationId"     -> UUID.randomUUID.toString,
+                "boxId"              -> UUID.randomUUID.toString,
+                "status"             -> "ACKNOWLEDGED",
                 "messageContentType" -> "application/xml",
-                "message" -> s"""
+                "message"            -> s"""
                 |<?xml version="1.0" encoding="UTF-8"?>
                 |<CC007A>
                 |  <SynIdeMES1>UNOC</SynIdeMES1>
@@ -113,7 +120,8 @@ class NotificationsSpec extends AnyWordSpec with Matchers with GuiceOneServerPer
                 |  </CUSOFFPREOFFRES>
                 |</CC007A>
                 |""".trim.stripMargin,
-                "createdDateTime" -> DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(OffsetDateTime.now)
+                "createdDateTime" -> DateTimeFormatter.ISO_OFFSET_DATE_TIME
+                  .format(OffsetDateTime.now)
               )
             )
           )
@@ -128,12 +136,13 @@ class NotificationsSpec extends AnyWordSpec with Matchers with GuiceOneServerPer
           .post(
             Json.stringify(
               Json.obj(
-                "notificationId" -> UUID.randomUUID.toString,
-                "boxId" -> UUID.randomUUID.toString,
-                "status" -> "ACKNOWLEDGED",
+                "notificationId"     -> UUID.randomUUID.toString,
+                "boxId"              -> UUID.randomUUID.toString,
+                "status"             -> "ACKNOWLEDGED",
                 "messageContentType" -> "application/xml",
-                "message" -> """{"key":"value"}""",
-                "createdDateTime" -> DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(OffsetDateTime.now)
+                "message"            -> """{"key":"value"}""",
+                "createdDateTime" -> DateTimeFormatter.ISO_OFFSET_DATE_TIME
+                  .format(OffsetDateTime.now)
               )
             )
           )

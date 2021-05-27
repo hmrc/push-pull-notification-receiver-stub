@@ -28,7 +28,8 @@ import play.api.inject.guice.GuiceableModule
 import org.scalatestplus.play.BaseOneServerPerSuite
 import org.scalatestplus.play.FakeApplicationFactory
 
-trait WiremockSuite extends BeforeAndAfterAll with BeforeAndAfterEach { this: Suite with BaseOneServerPerSuite with FakeApplicationFactory =>
+trait WiremockSuite extends BeforeAndAfterAll with BeforeAndAfterEach {
+  this: Suite with BaseOneServerPerSuite with FakeApplicationFactory =>
 
   protected val server: WireMockServer = new WireMockServer(
     WireMockConfiguration.wireMockConfig().dynamicPort()
