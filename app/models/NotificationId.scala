@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.pushpullnotificationreceiverstub.models
+package models
 
 import play.api.libs.json.Format
 import play.api.libs.json.Json
 
-case class BoxId(value: String) extends AnyVal
+case class NotificationId(value: String) extends AnyVal
 
-object BoxId {
-  implicit val notificationIdFormat: Format[BoxId] = Json.valueFormat[BoxId]
+object NotificationId {
+  implicit val notificationIdFormat: Format[NotificationId] = Json.valueFormat[NotificationId]
 }

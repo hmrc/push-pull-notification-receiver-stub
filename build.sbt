@@ -25,7 +25,7 @@ lazy val microservice = Project(appName, file("."))
 // Scoverage exclusions and minimums
 lazy val scoverageSettings = Def.settings(
   Test / parallelExecution := false,
-  ScoverageKeys.coverageMinimumStmtTotal := 10,
+  ScoverageKeys.coverageMinimumStmtTotal := 95,
   ScoverageKeys.coverageFailOnMinimum := true,
   ScoverageKeys.coverageHighlighting := true,
   ScoverageKeys.coverageExcludedFiles := Seq(
@@ -38,6 +38,6 @@ lazy val scoverageSettings = Def.settings(
     """.*\.Routes""",
     """.*\.RoutesPrefix""",
     """.*\.Reverse[^.]*""",
-    """uk\.gov\.hmrc\.pushpullnotificationreceiverstub\.config\.*"""
+    """config\.*"""
   ).mkString(";")
 )

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.pushpullnotificationreceiverstub.models
+package models
 
 import play.api.libs.json.Format
 import play.api.libs.json.Json
@@ -24,13 +24,11 @@ import play.api.libs.json.JsonValidationError
 
 sealed abstract class NotificationStatus(val name: String) extends Product with Serializable
 
-case object Pending extends NotificationStatus("PENDING")
-
-case object Acknowledged extends NotificationStatus("ACKNOWLEDGED")
-
-case object Failed extends NotificationStatus("FAILED")
-
 object NotificationStatus {
+  case object Pending extends NotificationStatus("PENDING")
+  case object Acknowledged extends NotificationStatus("ACKNOWLEDGED")
+  case object Failed extends NotificationStatus("FAILED")
+
   val values = Set(Pending, Acknowledged, Failed)
 
   def withName(name: String): NotificationStatus =
