@@ -12,6 +12,8 @@ lazy val microservice = Project(appName, file("."))
   .configs(IntegrationTest)
   .settings(SbtDistributablesPlugin.publishingSettings)
   .settings(DefaultBuildSettings.integrationTestSettings())
+  .settings(inConfig(Test)(testReportSettings))
+  .settings(inConfig(IntegrationTest)(testReportSettings))
   .settings(inConfig(IntegrationTest)(ScalafmtPlugin.scalafmtConfigSettings))
   .settings(scoverageSettings)
   .settings(
@@ -42,4 +44,14 @@ lazy val scoverageSettings = Def.settings(
     """.*\.Reverse[^.]*""",
     """config\.*"""
   ).mkString(";")
+)
+
+val testReportSettings = Def.settings(
+  testOptions ~= { opts =>
+    if (sys.env.get("JENKINS_HOME").nonEmpty) {
+      opts
+    } else {
+      Seq.empty
+    }
+  }
 )
