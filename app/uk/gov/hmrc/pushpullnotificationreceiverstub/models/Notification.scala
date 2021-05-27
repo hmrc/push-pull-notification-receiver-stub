@@ -35,7 +35,7 @@ import scala.xml.NodeSeq
 
 import XMLFormats._
 
-trait Notification extends Product with Serializable {
+sealed abstract class Notification extends Product with Serializable {
   def notificationId: NotificationId
   def boxId: BoxId
   def status: NotificationStatus
