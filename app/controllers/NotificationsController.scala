@@ -16,20 +16,22 @@
 
 package controllers
 
-import javax.inject.Inject
-import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
+import models.BoxId
+import models.JsonNotification
+import models.Notification
+import play.api.libs.json.JsValue
+import play.api.libs.json.Json
 import play.api.mvc.Action
 import play.api.mvc.AnyContent
 import play.api.mvc.ControllerComponents
-import models.Notification
-import play.api.libs.json.Json
+import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
+
+import javax.inject.Inject
 import scala.concurrent.Future
-import play.api.libs.json.JsValue
-import models.JsonNotification
 
 class NotificationsController @Inject() (cc: ControllerComponents) extends BackendController(cc) {
 
-  def getNotifications: Action[AnyContent] = Action { _ =>
+  def getNotifications(boxId: BoxId): Action[AnyContent] = Action { _ =>
     Ok(Json.toJson(Seq.empty[Notification]))
   }
 

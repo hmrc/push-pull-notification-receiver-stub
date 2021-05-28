@@ -19,8 +19,10 @@ package models
 import play.api.libs.json.Format
 import play.api.libs.json.Json
 
-case class BoxId(value: String) extends AnyVal
+import java.util.UUID
+
+case class BoxId(value: UUID) extends AnyVal
 
 object BoxId {
-  implicit val notificationIdFormat: Format[BoxId] = Json.valueFormat[BoxId]
+  implicit val boxIdFormat: Format[BoxId] = Json.valueFormat[BoxId]
 }
