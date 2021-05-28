@@ -16,16 +16,67 @@
 
 package services
 
+import cats.syntax.all._
+import com.google.inject.ImplementedBy
+import com.mongodb.MongoServerException
 import models.BoxId
 import models.Notification
+import play.api.Logging
 import repositories.NotificationsRepository
+import uk.gov.hmrc.mongo.MongoUtils.DuplicateKey
 
 import javax.inject.Inject
-import scala.concurrent.Future
 import scala.concurrent.ExecutionContext
-import org.mongodb.scala.model.Filters
+import scala.concurrent.Future
+import scala.util.Failure
+import scala.util.Success
+import scala.util.control.NonFatal
 
-class NotificationsService @Inject() (repo: NotificationsRepository)(implicit ec: ExecutionContext) {
-  def getNotifications(boxId: BoxId): Future[Seq[Notification]] = repo.find(boxId)
-  def saveNotification(notification: Notification): Future[Unit] = repo.insert(notification)
+import NotificationsService._
+
+@ImplementedBy(classOf[NotificationsServiceImpl])
+trait NotificationsService {
+  def getNotifications(boxId: BoxId): Future[Seq[Notification]]
+
+  def saveNotification(notification: Notification): Future[Either[Error, Unit]]
+}
+
+class NotificationsServiceImpl @Inject() (repo: NotificationsRepository)(implicit
+  ec: ExecutionContext
+) extends NotificationsService
+    with Logging {
+
+  override def getNotifications(boxId: BoxId): Future[Seq[Notification]] = repo.find(boxId)
+
+  override def saveNotification(notification: Notification): Future[Either[Error, Unit]] =
+    repo.insert(notification).transformWith {
+      case Success(_) =>
+        Future.successful(Either.right(()))
+
+      case Failure(DuplicateKey(e)) =>
+        logger.error(
+          s"Duplicate key error while inserting notification ${notification.notificationId.value}",
+          e
+        )
+
+        Future.successful(Either.left(DuplicateId(e)))
+
+      case exception @ Failure(NonFatal(e)) =>
+        logger.error(
+          s"Unexpected error while inserting notification ${notification.notificationId.value}",
+          e
+        )
+
+        Future.failed(e)
+
+    }
+}
+
+object NotificationsService {
+  sealed abstract class Error(val message: String)
+      extends Throwable(message)
+      with Product
+      with Serializable
+
+  case class DuplicateId(exception: MongoServerException) extends Error(exception.getMessage)
 }

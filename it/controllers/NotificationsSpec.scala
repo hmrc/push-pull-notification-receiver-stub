@@ -17,17 +17,25 @@
 package controllers
 
 import base.WiremockSuite
+import models.BoxId
+import models.JsonNotification
+import models.Notification
+import models.NotificationId
+import models.NotificationStatus
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import play.api.http.ContentTypes
 import play.api.http.HeaderNames
 import play.api.http.Status
+import play.api.inject.bind
+import play.api.inject.guice.GuiceableModule
 import play.api.libs.json.Json
 import play.api.libs.ws.WSClient
-import play.api.mvc.Headers
 import play.api.test.DefaultAwaitTimeout
 import play.api.test.FutureAwaits
+import uk.gov.hmrc.mongo.MongoComponent
+import uk.gov.hmrc.mongo.test.CleanMongoCollectionSupport
 
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
@@ -39,20 +47,75 @@ class NotificationsSpec
     with GuiceOneServerPerSuite
     with WiremockSuite
     with FutureAwaits
-    with DefaultAwaitTimeout {
+    with DefaultAwaitTimeout
+    with CleanMongoCollectionSupport {
+
   override protected def portConfigKeys: Seq[String] = Seq.empty
+
+  override protected def bindings: Seq[GuiceableModule] = Seq(
+    bind[MongoComponent].toInstance(mongoComponent)
+  )
+
+  // override protected def beforeEach() {}
 
   lazy val ws: WSClient = app.injector.instanceOf[WSClient]
 
   "GET /notifications" should {
-    "return OK" in {
-      await(
+    "return OK and empty list when the database is empty" in {
+      val response = await(
         ws
           .url(
             s"http://localhost:$port/push-pull-notification-receiver-stub/notifications/${UUID.randomUUID}"
           )
           .get()
+      )
+
+      response.status shouldBe Status.OK
+      response.json.as[Seq[Notification]] shouldBe Seq.empty
+    }
+
+    "return OK and a single result when a notification is added" in {
+      val notificationId = UUID.randomUUID
+      val boxId          = UUID.randomUUID
+      val dateTime       = OffsetDateTime.now
+
+      await(
+        ws
+          .url(s"http://localhost:$port/push-pull-notification-receiver-stub/notifications")
+          .withHttpHeaders(HeaderNames.CONTENT_TYPE -> ContentTypes.JSON)
+          .post(
+            Json.stringify(
+              Json.obj(
+                "notificationId"     -> notificationId.toString,
+                "boxId"              -> boxId.toString,
+                "status"             -> "ACKNOWLEDGED",
+                "messageContentType" -> "application/json",
+                "message"            -> """{"key":"value"}""",
+                "createdDateTime"    -> DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(dateTime)
+              )
+            )
+          )
       ).status shouldBe Status.OK
+
+      val response = await(
+        ws
+          .url(
+            s"http://localhost:$port/push-pull-notification-receiver-stub/notifications/${boxId}"
+          )
+          .get()
+      )
+
+      response.status shouldBe Status.OK
+
+      response.json.as[Seq[Notification]] shouldBe Seq(
+        JsonNotification(
+          notificationId = NotificationId(notificationId),
+          boxId = BoxId(boxId),
+          status = NotificationStatus.Acknowledged,
+          message = Json.obj("key" -> "value"),
+          createdDateTime = dateTime
+        )
+      )
     }
 
     "return BAD_REQUEST when the box ID is not a UUID" in {
@@ -65,7 +128,7 @@ class NotificationsSpec
   }
 
   "POST /notifications" should {
-    "return ACCEPTED for a JSON message" in {
+    "return OK for a JSON message" in {
       await(
         ws
           .url(s"http://localhost:$port/push-pull-notification-receiver-stub/notifications")
@@ -83,10 +146,10 @@ class NotificationsSpec
               )
             )
           )
-      ).status shouldBe Status.ACCEPTED
+      ).status shouldBe Status.OK
     }
 
-    "return ACCEPTED for an XML message" in {
+    "return OK for an XML message" in {
       await(
         ws
           .url(s"http://localhost:$port/push-pull-notification-receiver-stub/notifications")
@@ -135,7 +198,35 @@ class NotificationsSpec
               )
             )
           )
-      ).status shouldBe Status.ACCEPTED
+      ).status shouldBe Status.OK
+    }
+
+    "return CONFLICT when trying to insert a duplicate notification ID" in {
+      val notification = Json.stringify(
+        Json.obj(
+          "notificationId"     -> UUID.randomUUID.toString,
+          "boxId"              -> UUID.randomUUID.toString,
+          "status"             -> "ACKNOWLEDGED",
+          "messageContentType" -> "application/json",
+          "message"            -> """{"key":"value"}""",
+          "createdDateTime" -> DateTimeFormatter.ISO_OFFSET_DATE_TIME
+            .format(OffsetDateTime.now)
+        )
+      )
+
+      await(
+        ws
+          .url(s"http://localhost:$port/push-pull-notification-receiver-stub/notifications")
+          .withHttpHeaders(HeaderNames.CONTENT_TYPE -> ContentTypes.JSON)
+          .post(notification)
+      ).status shouldBe Status.OK
+
+      await(
+        ws
+          .url(s"http://localhost:$port/push-pull-notification-receiver-stub/notifications")
+          .withHttpHeaders(HeaderNames.CONTENT_TYPE -> ContentTypes.JSON)
+          .post(notification)
+      ).status shouldBe Status.CONFLICT
     }
 
     "return BAD_REQUEST for a JSON message with XML content type" in {
@@ -151,6 +242,58 @@ class NotificationsSpec
                 "status"             -> "ACKNOWLEDGED",
                 "messageContentType" -> "application/xml",
                 "message"            -> """{"key":"value"}""",
+                "createdDateTime" -> DateTimeFormatter.ISO_OFFSET_DATE_TIME
+                  .format(OffsetDateTime.now)
+              )
+            )
+          )
+      ).status shouldBe Status.BAD_REQUEST
+    }
+
+    "return BAD_REQUEST for an XML message with JSON content type" in {
+      await(
+        ws
+          .url(s"http://localhost:$port/push-pull-notification-receiver-stub/notifications")
+          .withHttpHeaders(HeaderNames.CONTENT_TYPE -> ContentTypes.JSON)
+          .post(
+            Json.stringify(
+              Json.obj(
+                "notificationId"     -> UUID.randomUUID.toString,
+                "boxId"              -> UUID.randomUUID.toString,
+                "status"             -> "ACKNOWLEDGED",
+                "messageContentType" -> "application/json",
+                "message"            -> s"""
+                |<?xml version="1.0" encoding="UTF-8"?>
+                |<CC007A>
+                |  <SynIdeMES1>UNOC</SynIdeMES1>
+                |  <SynVerNumMES2>3</SynVerNumMES2>
+                |  <MesRecMES6>NCTS</MesRecMES6>
+                |  <DatOfPreMES9>20200519</DatOfPreMES9>
+                |  <TimOfPreMES10>1357</TimOfPreMES10>
+                |  <IntConRefMES11>WE190912102534</IntConRefMES11>
+                |  <AppRefMES14>NCTS</AppRefMES14>
+                |  <TesIndMES18>0</TesIndMES18>
+                |  <MesIdeMES19>1</MesIdeMES19>
+                |  <MesTypMES20>GB007A</MesTypMES20>
+                |  <HEAHEA>
+                |    <DocNumHEA5>01CTC201909121215</DocNumHEA5>
+                |    <ArrNotPlaHEA60>DOVER</ArrNotPlaHEA60>
+                |    <ArrNotPlaHEA60LNG>EN</ArrNotPlaHEA60LNG>
+                |    <ArrAgrLocOfGooHEA63LNG>EN</ArrAgrLocOfGooHEA63LNG>
+                |    <SimProFlaHEA132>1</SimProFlaHEA132>
+                |    <ArrNotDatHEA141>20190912</ArrNotDatHEA141>
+                |    <DiaLanIndAtDesHEA255>EN</DiaLanIndAtDesHEA255>
+                |  </HEAHEA>
+                |  <TRADESTRD>
+                |    <CouTRD25>GB</CouTRD25>
+                |    <NADLNGRD>EN</NADLNGRD>
+                |    <TINTRD59>GB602070107000</TINTRD59>
+                |  </TRADESTRD>
+                |  <CUSOFFPREOFFRES>
+                |    <RefNumRES1>GB000060</RefNumRES1>
+                |  </CUSOFFPREOFFRES>
+                |</CC007A>
+                |""".trim.stripMargin,
                 "createdDateTime" -> DateTimeFormatter.ISO_OFFSET_DATE_TIME
                   .format(OffsetDateTime.now)
               )

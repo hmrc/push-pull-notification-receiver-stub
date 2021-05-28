@@ -15,6 +15,7 @@
  */
 
 package models
+package formats
 
 import play.api.http.MimeTypes
 import play.api.libs.json.JsObject
@@ -25,11 +26,23 @@ import play.api.libs.json.OWrites
 import play.api.libs.json.Reads
 import uk.gov.hmrc.mongo.play.json.formats.MongoJavatimeFormats
 
+import JsonFormats._
 import XMLFormats._
 
 object MongoFormats extends MongoJavatimeFormats {
-  implicit val jsonNotificationFormat: OFormat[JsonNotification] = Json.format[JsonNotification]
-  implicit val xmlNotificationFormat: OFormat[XMLNotification] = Json.format[XMLNotification]
+  implicit val jsonNotificationReads: Reads[JsonNotification] =
+    Json.reads[JsonNotification]
+  implicit val jsonNotificationWrites: OWrites[JsonNotification] =
+    Json.writes[JsonNotification].transform(_ ++ Json.obj("messageContentType" -> MimeTypes.JSON))
+  implicit val jsonNotificationFormat: OFormat[JsonNotification] =
+    OFormat(jsonNotificationReads, jsonNotificationWrites)
+
+  implicit val xmlNotificationReads: Reads[XMLNotification] =
+    Json.reads[XMLNotification]
+  implicit val xmlNotificationWrites: OWrites[XMLNotification] =
+    Json.writes[XMLNotification].transform(_ ++ Json.obj("messageContentType" -> MimeTypes.XML))
+  implicit val xmlNotificationFormat: OFormat[XMLNotification] =
+    OFormat(xmlNotificationReads, xmlNotificationWrites)
 
   implicit val notificationReads: Reads[Notification] =
     (JsPath \ "messageContentType").read[String].flatMap {

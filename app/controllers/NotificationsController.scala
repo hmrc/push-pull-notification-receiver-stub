@@ -17,22 +17,21 @@
 package controllers
 
 import models.BoxId
-import models.JsonNotification
 import models.Notification
 import play.api.libs.json.JsValue
 import play.api.libs.json.Json
 import play.api.mvc.Action
 import play.api.mvc.AnyContent
 import play.api.mvc.ControllerComponents
+import services.NotificationsService
+import services.NotificationsService.DuplicateId
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 import javax.inject.Inject
-import scala.concurrent.Future
-import services.NotificationsService
 import scala.concurrent.ExecutionContext
-import scala.util.Success
+import scala.concurrent.Future
 import scala.util.Failure
-import uk.gov.hmrc.mongo.MongoUtils.DuplicateKey
+import scala.util.Success
 import scala.util.control.NonFatal
 
 class NotificationsController @Inject() (
@@ -47,11 +46,10 @@ class NotificationsController @Inject() (
 
   def receiveNotification: Action[JsValue] = Action.async(parse.json) { implicit request =>
     withJsonBody[Notification] { notification =>
-      // TODO: Use a domain error type in the service instead of handling errors here
       notificationsService.saveNotification(notification).transformWith {
-        case Success(_)               => Future.successful(Ok)
-        case Failure(DuplicateKey(_)) => Future.successful(Conflict)
-        case Failure(NonFatal(_))     => Future.successful(InternalServerError)
+        case Success(Right(_))             => Future.successful(Ok)
+        case Success(Left(DuplicateId(_))) => Future.successful(Conflict)
+        case Failure(NonFatal(_))          => Future.successful(InternalServerError)
       }
     }
   }

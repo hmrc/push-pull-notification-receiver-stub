@@ -17,8 +17,6 @@
 package models
 
 import play.api.http.MimeTypes
-import play.api.libs.functional.syntax._
-import play.api.libs.json.Format
 import play.api.libs.json.JsObject
 import play.api.libs.json.JsPath
 import play.api.libs.json.JsValue
@@ -26,14 +24,12 @@ import play.api.libs.json.Json
 import play.api.libs.json.OFormat
 import play.api.libs.json.OWrites
 import play.api.libs.json.Reads
-import play.api.libs.json.Writes
-import play.api.libs.ws.XML
 
 import java.time.OffsetDateTime
 import scala.xml.Elem
-import scala.xml.NodeSeq
 
-import XMLFormats._
+import formats.JsonFormats._
+import formats.XMLFormats._
 
 sealed abstract class Notification extends Product with Serializable {
   def notificationId: NotificationId

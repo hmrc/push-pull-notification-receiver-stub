@@ -16,21 +16,25 @@
 
 package repositories
 
-import models.MongoFormats
+import models.BoxId
 import models.Notification
+import models.formats.MongoFormats
+import org.bson.codecs.configuration.CodecRegistries
+import org.mongodb.scala.MongoClient
+import org.mongodb.scala.MongoCollection
+import org.mongodb.scala.model.Filters
 import org.mongodb.scala.model.IndexModel
 import org.mongodb.scala.model.IndexOptions
 import org.mongodb.scala.model.Indexes
 import uk.gov.hmrc.mongo.MongoComponent
+import uk.gov.hmrc.mongo.play.json.Codecs
+import uk.gov.hmrc.mongo.play.json.CollectionFactory
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
 
 import javax.inject.Inject
 import javax.inject.Singleton
 import scala.concurrent.ExecutionContext
-import models.BoxId
-import org.mongodb.scala.model.Filters
 import scala.concurrent.Future
-import com.mongodb.client.result.InsertOneResult
 
 @Singleton
 class NotificationsRepository @Inject() (mongo: MongoComponent)(implicit ec: ExecutionContext)
@@ -38,14 +42,32 @@ class NotificationsRepository @Inject() (mongo: MongoComponent)(implicit ec: Exe
       mongoComponent = mongo,
       collectionName = "notifications",
       domainFormat = MongoFormats.notificationFormat,
+      replaceIndexes = true,
       indexes = Seq(
-        IndexModel(Indexes.ascending("notificationId"), IndexOptions().unique(true)),
+        IndexModel(
+          Indexes.ascending("notificationId"),
+          IndexOptions().background(false).unique(true)
+        ),
         IndexModel(Indexes.ascending("boxId"))
       )
     ) {
 
+  override lazy val collection: MongoCollection[Notification] =
+    CollectionFactory
+      .collection(mongo.database, collectionName, domainFormat)
+      .withCodecRegistry(
+        CodecRegistries.fromRegistries(
+          CodecRegistries.fromCodecs(
+            Codecs.playFormatCodec(domainFormat),
+            Codecs.playFormatCodec(MongoFormats.jsonNotificationFormat),
+            Codecs.playFormatCodec(MongoFormats.xmlNotificationFormat)
+          ),
+          MongoClient.DEFAULT_CODEC_REGISTRY
+        )
+      )
+
   def find(boxId: BoxId): Future[Seq[Notification]] =
-    collection.find(Filters.eq("boxId", boxId.value.toString)).toFuture
+    collection.find(Filters.eq("boxId", Codecs.toBson(boxId.value))).toFuture
 
   def insert(notification: Notification): Future[Unit] =
     collection.insertOne(notification).toFuture.map(_ => ())

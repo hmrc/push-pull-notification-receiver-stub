@@ -17,10 +17,9 @@
 package models
 
 import play.api.libs.json.Format
-import play.api.libs.json.Json
+import play.api.libs.json.JsonValidationError
 import play.api.libs.json.Reads
 import play.api.libs.json.Writes
-import play.api.libs.json.JsonValidationError
 
 sealed abstract class NotificationStatus(val name: String) extends Product with Serializable
 
