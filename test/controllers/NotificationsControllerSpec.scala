@@ -40,7 +40,7 @@ class NotificationsControllerSpec extends AnyWordSpec with Matchers {
   "GET /notifications" should {
     "return OK" in {
       val fakeRequest = FakeRequest("GET", "/notification")
-      val result      = controller.getNotifications()(fakeRequest)
+      val result      = controller.getNotifications(BoxId(UUID.randomUUID))(fakeRequest)
       status(result) shouldBe Status.OK
       contentAsJson(result).as[Seq[Notification]] shouldBe Seq.empty
     }
@@ -49,8 +49,8 @@ class NotificationsControllerSpec extends AnyWordSpec with Matchers {
   "POST /notifications" should {
     "return ACCEPTED for a JSON notification" in {
       val notification: Notification = JsonNotification(
-        NotificationId(UUID.randomUUID.toString),
-        BoxId(UUID.randomUUID.toString),
+        NotificationId(UUID.randomUUID),
+        BoxId(UUID.randomUUID),
         Json.toJson(Json.obj()),
         NotificationStatus.Acknowledged,
         OffsetDateTime.now
@@ -66,8 +66,8 @@ class NotificationsControllerSpec extends AnyWordSpec with Matchers {
 
     "return ACCEPTED for an XML notification" in {
       val notification: Notification = XMLNotification(
-        NotificationId(UUID.randomUUID.toString),
-        BoxId(UUID.randomUUID.toString),
+        NotificationId(UUID.randomUUID),
+        BoxId(UUID.randomUUID),
         <CC007A>
           <SynIdeMES1>UNOC</SynIdeMES1>
           <SynVerNumMES2>3</SynVerNumMES2>

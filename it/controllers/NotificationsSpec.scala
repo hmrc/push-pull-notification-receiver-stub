@@ -20,18 +20,18 @@ import base.WiremockSuite
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
+import play.api.http.ContentTypes
+import play.api.http.HeaderNames
 import play.api.http.Status
 import play.api.libs.json.Json
 import play.api.libs.ws.WSClient
+import play.api.mvc.Headers
 import play.api.test.DefaultAwaitTimeout
 import play.api.test.FutureAwaits
 
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
 import java.util.UUID
-import play.api.http.ContentTypes
-import play.api.mvc.Headers
-import play.api.http.HeaderNames
 
 class NotificationsSpec
     extends AnyWordSpec
@@ -48,7 +48,7 @@ class NotificationsSpec
     "return OK" in {
       await(
         ws
-          .url(s"http://localhost:$port/push-pull-notification-receiver-stub/notifications")
+          .url(s"http://localhost:$port/push-pull-notification-receiver-stub/notifications/${UUID.randomUUID}")
           .get()
       ).status shouldBe Status.OK
     }
