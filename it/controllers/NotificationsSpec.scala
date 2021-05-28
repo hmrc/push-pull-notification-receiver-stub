@@ -52,6 +52,14 @@ class NotificationsSpec
           .get()
       ).status shouldBe Status.OK
     }
+
+    "return BAD_REQUEST when the box ID is not a UUID" in {
+      await(
+        ws
+          .url(s"http://localhost:$port/push-pull-notification-receiver-stub/notifications/1")
+          .get()
+      ).status shouldBe Status.BAD_REQUEST
+    }
   }
 
   "POST /notifications" should {
