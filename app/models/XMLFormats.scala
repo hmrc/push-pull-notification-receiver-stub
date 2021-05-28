@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.pushpullnotificationreceiverstub.models
+package models
 
 import play.api.libs.json.JsError
 import play.api.libs.json.JsResult

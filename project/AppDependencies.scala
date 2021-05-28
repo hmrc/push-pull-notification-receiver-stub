@@ -12,6 +12,7 @@ object AppDependencies {
     "org.scalatest"          %% "scalatest"              % "3.2.9"             % Test,
     "com.typesafe.play"      %% "play-test"              % PlayVersion.current % Test,
     "com.vladsch.flexmark"    % "flexmark-all"           % "0.36.8"            % "test, it",
-    "org.scalatestplus.play" %% "scalatestplus-play"     % "5.1.0"             % "test, it"
+    "org.scalatestplus.play" %% "scalatestplus-play"     % "5.1.0"             % "test, it",
+    "com.github.tomakehurst"  % "wiremock-standalone"    % "2.27.2"            % IntegrationTest
   )
 }
