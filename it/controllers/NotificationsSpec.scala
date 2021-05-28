@@ -48,7 +48,9 @@ class NotificationsSpec
     "return OK" in {
       await(
         ws
-          .url(s"http://localhost:$port/push-pull-notification-receiver-stub/notifications/${UUID.randomUUID}")
+          .url(
+            s"http://localhost:$port/push-pull-notification-receiver-stub/notifications/${UUID.randomUUID}"
+          )
           .get()
       ).status shouldBe Status.OK
     }
