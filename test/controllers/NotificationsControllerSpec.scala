@@ -32,10 +32,14 @@ import play.api.test.Helpers._
 
 import java.time.OffsetDateTime
 import java.util.UUID
+import scala.concurrent.ExecutionContext.Implicits.global
 
 class NotificationsControllerSpec extends AnyWordSpec with Matchers {
 
-  private val controller = new NotificationsController(Helpers.stubControllerComponents())
+  private val controller = new NotificationsController(
+    ???, // TODO: Write a fake NotificationService backed by a Map
+    Helpers.stubControllerComponents()
+  )
 
   "GET /notifications" should {
     "return OK" in {

@@ -28,16 +28,31 @@ import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 import javax.inject.Inject
 import scala.concurrent.Future
+import services.NotificationsService
+import scala.concurrent.ExecutionContext
+import scala.util.Success
+import scala.util.Failure
+import uk.gov.hmrc.mongo.MongoUtils.DuplicateKey
+import scala.util.control.NonFatal
 
-class NotificationsController @Inject() (cc: ControllerComponents) extends BackendController(cc) {
+class NotificationsController @Inject() (
+  notificationsService: NotificationsService,
+  cc: ControllerComponents
+)(implicit ec: ExecutionContext)
+    extends BackendController(cc) {
 
-  def getNotifications(boxId: BoxId): Action[AnyContent] = Action { _ =>
-    Ok(Json.toJson(Seq.empty[Notification]))
+  def getNotifications(boxId: BoxId): Action[AnyContent] = Action.async { _ =>
+    notificationsService.getNotifications(boxId).map(results => Ok(Json.toJson(results)))
   }
 
   def receiveNotification: Action[JsValue] = Action.async(parse.json) { implicit request =>
-    withJsonBody[Notification] { request =>
-      Future.successful(Accepted)
+    withJsonBody[Notification] { notification =>
+      // TODO: Use a domain error type in the service instead of handling errors here
+      notificationsService.saveNotification(notification).transformWith {
+        case Success(_)               => Future.successful(Ok)
+        case Failure(DuplicateKey(_)) => Future.successful(Conflict)
+        case Failure(NonFatal(_))     => Future.successful(InternalServerError)
+      }
     }
   }
 }
