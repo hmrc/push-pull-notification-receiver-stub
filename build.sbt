@@ -35,7 +35,7 @@ lazy val scalacSettings = Def.settings(
 
 // Scoverage exclusions and minimums
 lazy val scoverageSettings = Def.settings(
-  ScoverageKeys.coverageMinimumStmtTotal := 95,
+  ScoverageKeys.coverageMinimumStmtTotal := 85,
   ScoverageKeys.coverageFailOnMinimum := true,
   ScoverageKeys.coverageHighlighting := true,
   ScoverageKeys.coverageExcludedFiles := Seq(

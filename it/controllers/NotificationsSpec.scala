@@ -34,8 +34,10 @@ import play.api.libs.json.Json
 import play.api.libs.ws.WSClient
 import play.api.test.DefaultAwaitTimeout
 import play.api.test.FutureAwaits
+import repositories.NotificationsRepository
 import uk.gov.hmrc.mongo.MongoComponent
-import uk.gov.hmrc.mongo.test.CleanMongoCollectionSupport
+import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
+import uk.gov.hmrc.mongo.test.DefaultPlayMongoRepositorySupport
 
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
@@ -48,7 +50,7 @@ class NotificationsSpec
     with WiremockSuite
     with FutureAwaits
     with DefaultAwaitTimeout
-    with CleanMongoCollectionSupport {
+    with DefaultPlayMongoRepositorySupport[Notification] {
 
   override protected def portConfigKeys: Seq[String] = Seq.empty
 
@@ -56,9 +58,10 @@ class NotificationsSpec
     bind[MongoComponent].toInstance(mongoComponent)
   )
 
-  // override protected def beforeEach() {}
-
   lazy val ws: WSClient = app.injector.instanceOf[WSClient]
+
+  override lazy val repository: PlayMongoRepository[Notification] =
+    app.injector.instanceOf[NotificationsRepository]
 
   "GET /notifications" should {
     "return OK and empty list when the database is empty" in {
