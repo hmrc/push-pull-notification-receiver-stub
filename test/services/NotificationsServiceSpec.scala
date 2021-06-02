@@ -87,13 +87,23 @@ class NotificationsServiceSpec
       )
     }
 
-    "rethrow unexpected exceptions" in {
+    "rethrow unexpected exceptions when inserting notifications" in {
       when(mockRepository.insert(notification)) thenReturn Future.failed(
         new RuntimeException("kaboom")
       )
 
       intercept[RuntimeException] {
         await(service.saveNotification(notification))
+      }
+    }
+
+    "rethrow unexpected exceptions when deleting notifications" in {
+      when(mockRepository.deleteAll()) thenReturn Future.failed(
+        new RuntimeException("kaboom")
+      )
+
+      intercept[RuntimeException] {
+        await(service.deleteNotifications())
       }
     }
   }
