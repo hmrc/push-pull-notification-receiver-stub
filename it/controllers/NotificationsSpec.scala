@@ -63,7 +63,7 @@ class NotificationsSpec
   override lazy val repository: PlayMongoRepository[Notification] =
     app.injector.instanceOf[NotificationsRepository]
 
-  "GET /notifications" should {
+  "GET /notifications/:boxId" should {
     "return OK and empty list when the database is empty" in {
       val response = await(
         ws

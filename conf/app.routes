@@ -1,4 +1,5 @@
 # microservice specific routes
 
+GET  /notifications        controllers.ChallengeController.answerChallenge(challenge: Challenge)
 GET  /notifications/:boxId controllers.NotificationsController.getNotifications(boxId: BoxId)
 POST /notifications        controllers.NotificationsController.receiveNotification
