@@ -29,14 +29,12 @@ lazy val microservice = Project(appName, file("."))
 
 lazy val scalacSettings = Def.settings(
   scalacOptions += "-Wconf:src=routes/.*:silent",
-  scalacOptions ~= { opts => opts.filterNot(Set("-Xlint")) },
-  scalacOptions ~= { opts => opts.filterNot(_.startsWith("-Ywarn-unused")) },
-  scalacOptions += "-Ywarn-unused:imports"
+  scalacOptions ~= { opts => opts.filterNot(Set("-Xlint")) }
 )
 
 // Scoverage exclusions and minimums
 lazy val scoverageSettings = Def.settings(
-  ScoverageKeys.coverageMinimumStmtTotal := 85,
+  ScoverageKeys.coverageMinimumStmtTotal := 89,
   ScoverageKeys.coverageFailOnMinimum := true,
   ScoverageKeys.coverageHighlighting := true,
   ScoverageKeys.coverageExcludedFiles := Seq(

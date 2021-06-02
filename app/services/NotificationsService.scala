@@ -61,7 +61,7 @@ class NotificationsServiceImpl @Inject() (repo: NotificationsRepository)(implici
 
         Future.successful(Either.left(DuplicateId(e)))
 
-      case exception @ Failure(NonFatal(e)) =>
+      case Failure(NonFatal(e)) =>
         logger.error(
           s"Unexpected error while inserting notification ${notification.notificationId.value}",
           e
