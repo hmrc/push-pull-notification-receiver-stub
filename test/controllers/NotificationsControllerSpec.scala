@@ -58,7 +58,7 @@ class NotificationsControllerSpec
 
   "GET /notifications" should {
     "return OK when there are no results" in {
-      val fakeRequest = FakeRequest("GET", "/notification")
+      val fakeRequest = FakeRequest("GET", "/notifications")
       val result      = controller.getNotifications(BoxId(UUID.randomUUID))(fakeRequest)
       status(result) shouldBe Status.OK
       contentAsJson(result).as[Seq[Notification]] shouldBe Seq.empty

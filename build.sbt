@@ -1,7 +1,7 @@
 import play.sbt.routes.RoutesKeys
+import scoverage.ScoverageKeys
 import uk.gov.hmrc.DefaultBuildSettings
 import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin
-import scoverage.ScoverageKeys
 
 val appName = "push-pull-notification-receiver-stub"
 
@@ -23,7 +23,8 @@ lazy val microservice = Project(appName, file("."))
     scalaVersion := "2.12.13",
     resolvers += Resolver.jcenterRepo,
     libraryDependencies ++= AppDependencies.compile ++ AppDependencies.test,
-    RoutesKeys.routesImport ++= Seq("models._")
+    RoutesKeys.routesImport ++= Seq("models._"),
+    PlayKeys.playDefaultPort := 10202
   )
 
 lazy val scalacSettings = Def.settings(
