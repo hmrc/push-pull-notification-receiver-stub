@@ -18,6 +18,7 @@ package controllers
 
 import models.BoxId
 import models.Notification
+import play.api.Logging
 import play.api.libs.json.JsValue
 import play.api.libs.json.Json
 import play.api.mvc.Action
@@ -38,13 +39,23 @@ class NotificationsController @Inject() (
   notificationsService: NotificationsService,
   cc: ControllerComponents
 )(implicit ec: ExecutionContext)
-    extends BackendController(cc) {
+    extends BackendController(cc)
+    with Logging {
 
   def getNotifications(boxId: BoxId): Action[AnyContent] = Action.async { _ =>
     notificationsService.getNotifications(boxId).map(results => Ok(Json.toJson(results)))
   }
 
+  def deleteNotifications: Action[AnyContent] = Action.async { _ =>
+    notificationsService.deleteNotifications().transformWith {
+      case Success(_)           => Future.successful(Accepted)
+      case Failure(NonFatal(_)) => Future.successful(InternalServerError)
+    }
+  }
+
   def receiveNotification: Action[JsValue] = Action.async(parse.json) { implicit request =>
+    logger.debug(s"Request JSON: ${Json.stringify(request.body)}")
+
     withJsonBody[Notification] { notification =>
       notificationsService.saveNotification(notification).transformWith {
         case Success(Right(_))             => Future.successful(Ok)

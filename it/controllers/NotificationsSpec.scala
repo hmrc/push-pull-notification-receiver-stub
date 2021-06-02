@@ -40,7 +40,6 @@ import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
 import uk.gov.hmrc.mongo.test.DefaultPlayMongoRepositorySupport
 
 import java.time.OffsetDateTime
-import java.time.format.DateTimeFormatter
 import java.util.UUID
 
 class NotificationsSpec
@@ -74,13 +73,13 @@ class NotificationsSpec
       )
 
       response.status shouldBe Status.OK
-      response.json.as[Seq[Notification]] shouldBe Seq.empty
+      response.json.as[List[Notification]] shouldBe List.empty
     }
 
     "return OK and a single result when a notification is added" in {
       val notificationId = UUID.randomUUID
       val boxId          = UUID.randomUUID
-      val dateTime       = OffsetDateTime.now
+      val dateTime       = OffsetDateTime.parse("2021-06-02T14:06:23.347Z")
 
       await(
         ws
@@ -94,7 +93,7 @@ class NotificationsSpec
                 "status"             -> "ACKNOWLEDGED",
                 "messageContentType" -> "application/json",
                 "message"            -> """{"key":"value"}""",
-                "createdDateTime"    -> DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(dateTime)
+                "createdDateTime"    -> "2021-06-02T14:06:23.347+0000"
               )
             )
           )
@@ -110,7 +109,7 @@ class NotificationsSpec
 
       response.status shouldBe Status.OK
 
-      response.json.as[Seq[Notification]] shouldBe Seq(
+      response.json.as[List[Notification]] shouldBe List(
         JsonNotification(
           notificationId = NotificationId(notificationId),
           boxId = BoxId(boxId),
@@ -130,6 +129,74 @@ class NotificationsSpec
     }
   }
 
+  "DELETE /notification" should {
+    "return ACCEPTED and delete all notifications" in {
+      val notificationId = UUID.randomUUID
+      val boxId          = UUID.randomUUID
+      val dateTime       = OffsetDateTime.parse("2021-06-02T14:06:23.347Z")
+
+      await(
+        ws
+          .url(s"http://localhost:$port/push-pull-notification-receiver-stub/notifications")
+          .withHttpHeaders(HeaderNames.CONTENT_TYPE -> ContentTypes.JSON)
+          .post(
+            Json.stringify(
+              Json.obj(
+                "notificationId"     -> notificationId.toString,
+                "boxId"              -> boxId.toString,
+                "status"             -> "ACKNOWLEDGED",
+                "messageContentType" -> "application/json",
+                "message"            -> """{"key":"value"}""",
+                "createdDateTime"    -> "2021-06-02T14:06:23.347+0000"
+              )
+            )
+          )
+      ).status shouldBe Status.OK
+
+      val getResponse = await(
+        ws
+          .url(
+            s"http://localhost:$port/push-pull-notification-receiver-stub/notifications/${boxId}"
+          )
+          .get()
+      )
+
+      getResponse.status shouldBe Status.OK
+
+      getResponse.json.as[List[Notification]] shouldBe List(
+        JsonNotification(
+          notificationId = NotificationId(notificationId),
+          boxId = BoxId(boxId),
+          status = NotificationStatus.Acknowledged,
+          message = Json.obj("key" -> "value"),
+          createdDateTime = dateTime
+        )
+      )
+
+      val deleteResponse = await(
+        ws
+          .url(
+            s"http://localhost:$port/push-pull-notification-receiver-stub/notifications"
+          )
+          .delete()
+      )
+
+      deleteResponse.status shouldBe Status.ACCEPTED
+
+      val getAfterDeleteResponse = await(
+        ws
+          .url(
+            s"http://localhost:$port/push-pull-notification-receiver-stub/notifications/${boxId}"
+          )
+          .get()
+      )
+
+      getAfterDeleteResponse.status shouldBe Status.OK
+
+      getAfterDeleteResponse.json.as[List[Notification]] shouldBe List.empty
+    }
+  }
+
   "POST /notifications" should {
     "return OK for a JSON message" in {
       await(
@@ -144,8 +211,7 @@ class NotificationsSpec
                 "status"             -> "ACKNOWLEDGED",
                 "messageContentType" -> "application/json",
                 "message"            -> """{"key":"value"}""",
-                "createdDateTime" -> DateTimeFormatter.ISO_OFFSET_DATE_TIME
-                  .format(OffsetDateTime.now)
+                "createdDateTime"    -> "2021-06-02T14:06:23.347+0000"
               )
             )
           )
@@ -196,8 +262,7 @@ class NotificationsSpec
                 |  </CUSOFFPREOFFRES>
                 |</CC007A>
                 |""".trim.stripMargin,
-                "createdDateTime" -> DateTimeFormatter.ISO_OFFSET_DATE_TIME
-                  .format(OffsetDateTime.now)
+                "createdDateTime"    -> "2021-06-02T14:06:23.347+0000"
               )
             )
           )
@@ -212,8 +277,7 @@ class NotificationsSpec
           "status"             -> "ACKNOWLEDGED",
           "messageContentType" -> "application/json",
           "message"            -> """{"key":"value"}""",
-          "createdDateTime" -> DateTimeFormatter.ISO_OFFSET_DATE_TIME
-            .format(OffsetDateTime.now)
+          "createdDateTime"    -> "2021-06-02T14:06:23.347+0000"
         )
       )
 
@@ -245,8 +309,7 @@ class NotificationsSpec
                 "status"             -> "ACKNOWLEDGED",
                 "messageContentType" -> "application/xml",
                 "message"            -> """{"key":"value"}""",
-                "createdDateTime" -> DateTimeFormatter.ISO_OFFSET_DATE_TIME
-                  .format(OffsetDateTime.now)
+                "createdDateTime"    -> "2021-06-02T14:06:23.347+0000"
               )
             )
           )
@@ -265,6 +328,7 @@ class NotificationsSpec
                 "boxId"              -> UUID.randomUUID.toString,
                 "status"             -> "ACKNOWLEDGED",
                 "messageContentType" -> "application/json",
+                "createdDateTime"    -> "2021-06-02T14:06:23.347+0000",
                 "message"            -> s"""
                 |<?xml version="1.0" encoding="UTF-8"?>
                 |<CC007A>
@@ -296,9 +360,7 @@ class NotificationsSpec
                 |    <RefNumRES1>GB000060</RefNumRES1>
                 |  </CUSOFFPREOFFRES>
                 |</CC007A>
-                |""".trim.stripMargin,
-                "createdDateTime" -> DateTimeFormatter.ISO_OFFSET_DATE_TIME
-                  .format(OffsetDateTime.now)
+                |""".trim.stripMargin
               )
             )
           )

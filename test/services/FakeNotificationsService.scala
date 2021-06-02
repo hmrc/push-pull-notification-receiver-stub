@@ -67,6 +67,6 @@ case class FakeNotificationsService(initialData: Map[NotificationId, Notificatio
     }
   }
 
-  def clear(): Unit =
-    data.clear()
+  override def deleteNotifications(): Future[Unit] =
+    Future.successful(data.clear())
 }

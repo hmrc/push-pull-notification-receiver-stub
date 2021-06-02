@@ -36,6 +36,7 @@ import services.NotificationsService
 
 import java.time.OffsetDateTime
 import java.util.UUID
+import scala.annotation.nowarn
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
@@ -52,8 +53,9 @@ class NotificationsControllerSpec
     Helpers.stubControllerComponents()
   )
 
+  @nowarn
   override protected def beforeEach(): Unit = {
-    notificationsService.clear()
+    await(notificationsService.deleteNotifications())
   }
 
   "GET /notifications" should {
@@ -114,6 +116,57 @@ class NotificationsControllerSpec
       val postResult = controller.receiveNotification()(fakePostRequest)
 
       status(postResult) shouldBe Status.INTERNAL_SERVER_ERROR
+    }
+  }
+
+  "DELETE /notifications" should {
+    "return ACCEPTED and delete all notifications" in {
+      val notification: Notification = JsonNotification(
+        NotificationId(UUID.randomUUID),
+        BoxId(UUID.randomUUID),
+        Json.toJson(Json.obj()),
+        NotificationStatus.Acknowledged,
+        OffsetDateTime.now
+      )
+
+      val fakePostRequest =
+        FakeRequest("POST", "/notifications").withBody(Json.toJsObject(notification))
+
+      val postResult = controller.receiveNotification()(fakePostRequest)
+
+      status(postResult) shouldBe Status.OK
+
+      val fakeGetRequest = FakeRequest("GET", s"/notifications/${notification.boxId.value}")
+
+      val getResult = controller.getNotifications(notification.boxId)(fakeGetRequest)
+
+      status(getResult) shouldBe Status.OK
+      contentAsJson(getResult).as[Seq[Notification]] shouldBe Seq(notification)
+
+      val fakeDeleteRequest = FakeRequest("DELETE", "/notifications")
+      val deleteResult      = controller.deleteNotifications()(fakeDeleteRequest)
+      status(deleteResult) shouldBe Status.ACCEPTED
+
+      val getAfterDelete = controller.getNotifications(notification.boxId)(fakeGetRequest)
+      status(getAfterDelete) shouldBe Status.OK
+      contentAsJson(getAfterDelete).as[Seq[Notification]] shouldBe Seq.empty
+    }
+
+    "return INTERNAL_SERVER_ERROR if something goes wrong in the service" in {
+      val mockNotificationsService = mock[NotificationsService]
+
+      val controller = new NotificationsController(
+        mockNotificationsService,
+        Helpers.stubControllerComponents()
+      )
+
+      when(mockNotificationsService.deleteNotifications())
+        .thenReturn(Future.failed(new RuntimeException("Ruh roh")))
+
+      val fakeDeleteRequest = FakeRequest("DELETE", "/notifications")
+      val deleteResult      = controller.deleteNotifications()(fakeDeleteRequest)
+
+      status(deleteResult) shouldBe Status.INTERNAL_SERVER_ERROR
     }
   }
 

@@ -38,6 +38,8 @@ import NotificationsService._
 trait NotificationsService {
   def getNotifications(boxId: BoxId): Future[Seq[Notification]]
 
+  def deleteNotifications(): Future[Unit]
+
   def saveNotification(notification: Notification): Future[Either[Error, Unit]]
 }
 
@@ -47,6 +49,20 @@ class NotificationsServiceImpl @Inject() (repo: NotificationsRepository)(implici
     with Logging {
 
   override def getNotifications(boxId: BoxId): Future[Seq[Notification]] = repo.find(boxId)
+
+  override def deleteNotifications(): Future[Unit] =
+    repo.deleteAll().transformWith {
+      case Success(_) =>
+        Future.successful(())
+
+      case Failure(NonFatal(e)) =>
+        logger.error(
+          s"Unexpected error while deleting notifications",
+          e
+        )
+
+        Future.failed(e)
+    }
 
   override def saveNotification(notification: Notification): Future[Either[Error, Unit]] =
     repo.insert(notification).transformWith {
