@@ -26,15 +26,14 @@ import org.mongodb.scala.ServerAddress
 import org.mongodb.scala.bson.BsonDocument
 import uk.gov.hmrc.mongo.MongoUtils
 
-import java.util.concurrent.atomic.AtomicReference
-import scala.concurrent.ExecutionContext
+import java.util.concurrent.ConcurrentHashMap
+import scala.collection.JavaConverters._
 import scala.concurrent.Future
 
 import NotificationsService._
 
-case class FakeNotificationsService(initialData: Map[NotificationId, Notification])(implicit
-  ec: ExecutionContext
-) extends NotificationsService {
+case class FakeNotificationsService(initialData: Map[NotificationId, Notification])
+    extends NotificationsService {
 
   private val localServerAddress: ServerAddress =
     ServerAddress("localhost", 27017)
@@ -47,33 +46,27 @@ case class FakeNotificationsService(initialData: Map[NotificationId, Notificatio
       )
     )
 
-  private val data: AtomicReference[Map[NotificationId, Notification]] =
-    new AtomicReference(initialData)
+  private val data: ConcurrentHashMap[NotificationId, Notification] =
+    new ConcurrentHashMap(initialData.asJava)
 
   override def getNotifications(boxId: BoxId): Future[Seq[Notification]] =
     Future.successful(
-      data
-        .get()
-        .collect {
-          case (_, notification) if notification.boxId == boxId =>
-            notification
-        }
-        .toSeq
+      data.asScala.collect {
+        case (_, notification) if notification.boxId == boxId =>
+          notification
+      }.toSeq
     )
 
   override def saveNotification(
     notification: Notification
   ): Future[Either[NotificationsService.Error, Unit]] = {
-    if (data.get().contains(notification.notificationId))
+    if (data.putIfAbsent(notification.notificationId, notification) != null) {
       Future.successful(Either.left(duplicateKeyError))
-    else
-      Future
-        .successful(data.updateAndGet { currentData =>
-          currentData + (notification.notificationId -> notification)
-        })
-        .map(_ => Either.right(()))
+    } else {
+      Future.successful(Either.right(()))
+    }
   }
 
   def clear(): Unit =
-    data.set(Map.empty)
+    data.clear()
 }
