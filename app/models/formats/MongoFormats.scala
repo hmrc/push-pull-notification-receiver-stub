@@ -15,70 +15,51 @@
  */
 
 package models
+package formats
 
 import play.api.http.MimeTypes
 import play.api.libs.json.JsObject
 import play.api.libs.json.JsPath
-import play.api.libs.json.JsValue
 import play.api.libs.json.Json
 import play.api.libs.json.OFormat
 import play.api.libs.json.OWrites
 import play.api.libs.json.Reads
+import uk.gov.hmrc.mongo.play.json.formats.MongoJavatimeFormats
 
-import java.time.OffsetDateTime
-import scala.xml.Elem
+import JsonFormats._
+import XMLFormats._
 
-import formats.JsonFormats._
-import formats.XMLFormats._
+object MongoFormats extends MongoJavatimeFormats {
+  implicit val jsonNotificationReads: Reads[JsonNotification] =
+    Json.reads[JsonNotification]
+  implicit val jsonNotificationWrites: OWrites[JsonNotification] =
+    Json.writes[JsonNotification].transform(_ ++ Json.obj("messageContentType" -> MimeTypes.JSON))
+  implicit val jsonNotificationFormat: OFormat[JsonNotification] =
+    OFormat(jsonNotificationReads, jsonNotificationWrites)
 
-sealed abstract class Notification extends Product with Serializable {
-  def notificationId: NotificationId
-  def boxId: BoxId
-  def status: NotificationStatus
-  def createdDateTime: OffsetDateTime
-}
+  implicit val xmlNotificationReads: Reads[XMLNotification] =
+    Json.reads[XMLNotification]
+  implicit val xmlNotificationWrites: OWrites[XMLNotification] =
+    Json.writes[XMLNotification].transform(_ ++ Json.obj("messageContentType" -> MimeTypes.XML))
+  implicit val xmlNotificationFormat: OFormat[XMLNotification] =
+    OFormat(xmlNotificationReads, xmlNotificationWrites)
 
-case class JsonNotification(
-  notificationId: NotificationId,
-  boxId: BoxId,
-  message: JsValue,
-  status: NotificationStatus,
-  createdDateTime: OffsetDateTime
-) extends Notification
-
-object JsonNotification {
-  implicit val jsonNotificationFormat: OFormat[JsonNotification] = Json.format[JsonNotification]
-}
-
-case class XMLNotification(
-  notificationId: NotificationId,
-  boxId: BoxId,
-  message: Elem,
-  status: NotificationStatus,
-  createdDateTime: OffsetDateTime
-) extends Notification
-
-object XMLNotification {
-  implicit val xmlNotificationFormat: OFormat[XMLNotification] = Json.format[XMLNotification]
-}
-
-object Notification {
   implicit val notificationReads: Reads[Notification] =
     (JsPath \ "messageContentType").read[String].flatMap {
       case MimeTypes.JSON =>
-        JsonNotification.jsonNotificationFormat.widen[Notification]
+        jsonNotificationFormat.widen[Notification]
       case MimeTypes.XML =>
-        XMLNotification.xmlNotificationFormat.widen[Notification]
+        xmlNotificationFormat.widen[Notification]
     }
 
   implicit val notificationWrites: OWrites[Notification] = new OWrites[Notification] {
     override def writes(notification: Notification): JsObject = notification match {
       case json @ JsonNotification(_, _, _, _, _) =>
-        JsonNotification.jsonNotificationFormat.writes(json) ++ Json.obj(
+        jsonNotificationFormat.writes(json) ++ Json.obj(
           "messageContentType" -> MimeTypes.JSON
         )
       case xml @ XMLNotification(_, _, _, _, _) =>
-        XMLNotification.xmlNotificationFormat.writes(xml) ++ Json.obj(
+        xmlNotificationFormat.writes(xml) ++ Json.obj(
           "messageContentType" -> MimeTypes.XML
         )
     }

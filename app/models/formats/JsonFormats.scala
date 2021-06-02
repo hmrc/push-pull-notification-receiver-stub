@@ -14,30 +14,14 @@
  * limitations under the License.
  */
 
-package models
+package models.formats
 
-import play.api.libs.json.JsError
-import play.api.libs.json.JsResult
-import play.api.libs.json.JsString
-import play.api.libs.json.JsValue
 import play.api.libs.json.Reads
+import play.api.libs.json.JsValue
+import play.api.libs.json.Json
 import play.api.libs.json.Writes
 
-import scala.util.Try
-import scala.xml.Elem
-import scala.xml.NodeSeq
-import scala.xml.XML
-
-object XMLFormats {
-  implicit val elemWrites: Writes[Elem] =
-    Writes.of[String].contramap(_.toString)
-
-  implicit val elemReads: Reads[Elem] = new Reads[Elem] {
-    override def reads(json: JsValue): JsResult[Elem] = json match {
-      case JsString(str) =>
-        JsResult.fromTry(Try(XML.loadString(str)))
-      case _ =>
-        JsError("error.expected.jsstring")
-    }
-  }
+object JsonFormats {
+  implicit val jsValueReads: Reads[JsValue]   = Reads.of[String].map(Json.parse)
+  implicit val jsValueWrites: Writes[JsValue] = Writes.of[String].contramap(Json.stringify)
 }

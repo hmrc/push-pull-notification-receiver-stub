@@ -22,6 +22,8 @@ import models.Notification
 import models.NotificationId
 import models.NotificationStatus
 import models.XMLNotification
+import org.mockito.scalatest.MockitoSugar
+import org.scalatest.BeforeAndAfterEach
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import play.api.http.Status
@@ -29,25 +31,94 @@ import play.api.libs.json.Json
 import play.api.test.FakeRequest
 import play.api.test.Helpers
 import play.api.test.Helpers._
+import services.FakeNotificationsService
+import services.NotificationsService
 
 import java.time.OffsetDateTime
 import java.util.UUID
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
-class NotificationsControllerSpec extends AnyWordSpec with Matchers {
+class NotificationsControllerSpec
+    extends AnyWordSpec
+    with Matchers
+    with BeforeAndAfterEach
+    with MockitoSugar {
 
-  private val controller = new NotificationsController(Helpers.stubControllerComponents())
+  private val notificationsService = FakeNotificationsService(Map.empty)
+
+  private val controller = new NotificationsController(
+    notificationsService,
+    Helpers.stubControllerComponents()
+  )
+
+  override protected def beforeEach(): Unit = {
+    notificationsService.clear()
+  }
 
   "GET /notifications" should {
-    "return OK" in {
+    "return OK when there are no results" in {
       val fakeRequest = FakeRequest("GET", "/notification")
       val result      = controller.getNotifications(BoxId(UUID.randomUUID))(fakeRequest)
       status(result) shouldBe Status.OK
       contentAsJson(result).as[Seq[Notification]] shouldBe Seq.empty
     }
+
+    "return OK when fetching a notification that was added" in {
+      val notification: Notification = JsonNotification(
+        NotificationId(UUID.randomUUID),
+        BoxId(UUID.randomUUID),
+        Json.toJson(Json.obj()),
+        NotificationStatus.Acknowledged,
+        OffsetDateTime.now
+      )
+
+      val fakePostRequest =
+        FakeRequest("POST", "/notifications").withBody(Json.toJsObject(notification))
+
+      val postResult = controller.receiveNotification()(fakePostRequest)
+
+      status(postResult) shouldBe Status.OK
+
+      val fakeGetRequest =
+        FakeRequest("GET", s"/notifications/${notification.boxId.value}")
+
+      val getResult = controller.getNotifications(notification.boxId)(fakeGetRequest)
+
+      status(getResult) shouldBe Status.OK
+      contentAsJson(getResult).as[Seq[Notification]] shouldBe Seq(notification)
+    }
+
+    "return INTERNAL_SERVER_ERROR when something goes wrong in the service" in {
+      val mockNotificationsService = mock[NotificationsService]
+
+      val controller = new NotificationsController(
+        mockNotificationsService,
+        Helpers.stubControllerComponents()
+      )
+
+      val notification: Notification = JsonNotification(
+        NotificationId(UUID.randomUUID),
+        BoxId(UUID.randomUUID),
+        Json.toJson(Json.obj()),
+        NotificationStatus.Acknowledged,
+        OffsetDateTime.now
+      )
+
+      when(mockNotificationsService.saveNotification(notification))
+        .thenReturn(Future.failed(new RuntimeException("Ruh roh")))
+
+      val fakePostRequest =
+        FakeRequest("POST", "/notifications").withBody(Json.toJsObject(notification))
+
+      val postResult = controller.receiveNotification()(fakePostRequest)
+
+      status(postResult) shouldBe Status.INTERNAL_SERVER_ERROR
+    }
   }
 
   "POST /notifications" should {
-    "return ACCEPTED for a JSON notification" in {
+    "return OK when adding a JSON notification" in {
       val notification: Notification = JsonNotification(
         NotificationId(UUID.randomUUID),
         BoxId(UUID.randomUUID),
@@ -61,10 +132,10 @@ class NotificationsControllerSpec extends AnyWordSpec with Matchers {
 
       val result = controller.receiveNotification()(fakeRequest)
 
-      status(result) shouldBe Status.ACCEPTED
+      status(result) shouldBe Status.OK
     }
 
-    "return ACCEPTED for an XML notification" in {
+    "return OK when adding an XML notification" in {
       val notification: Notification = XMLNotification(
         NotificationId(UUID.randomUUID),
         BoxId(UUID.randomUUID),
@@ -106,7 +177,28 @@ class NotificationsControllerSpec extends AnyWordSpec with Matchers {
 
       val result = controller.receiveNotification()(fakeRequest)
 
-      status(result) shouldBe Status.ACCEPTED
+      status(result) shouldBe Status.OK
+    }
+
+    "return CONFLICT when adding a duplicate notification" in {
+      val notification: Notification = JsonNotification(
+        NotificationId(UUID.randomUUID),
+        BoxId(UUID.randomUUID),
+        Json.toJson(Json.obj()),
+        NotificationStatus.Acknowledged,
+        OffsetDateTime.now
+      )
+
+      val fakePostRequest =
+        FakeRequest("POST", "/notifications").withBody(Json.toJsObject(notification))
+
+      val postResult = controller.receiveNotification()(fakePostRequest)
+
+      status(postResult) shouldBe Status.OK
+
+      val duplicateResult = controller.receiveNotification()(fakePostRequest)
+
+      status(duplicateResult) shouldBe Status.CONFLICT
     }
   }
 }

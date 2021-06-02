@@ -22,7 +22,6 @@ import org.scalatest.BeforeAndAfterAll
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.Suite
 import play.api.Application
-import play.api.inject.Injector
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.inject.guice.GuiceableModule
 import org.scalatestplus.play.BaseOneServerPerSuite
@@ -45,19 +44,19 @@ trait WiremockSuite extends BeforeAndAfterAll with BeforeAndAfterEach {
 
   protected def bindings: Seq[GuiceableModule] = Seq.empty
 
-  override def beforeAll(): Unit = {
+  override protected def beforeAll(): Unit = {
     server.start()
     app
     super.beforeAll()
   }
 
-  override def beforeEach(): Unit = {
+  override protected def beforeEach(): Unit = {
     server.resetAll()
     app
     super.beforeEach()
   }
 
-  override def afterAll(): Unit = {
+  override protected def afterAll(): Unit = {
     super.afterAll()
     server.stop()
   }
