@@ -22,6 +22,7 @@ import models.formats.MongoFormats
 import org.bson.codecs.configuration.CodecRegistries
 import org.mongodb.scala.MongoClient
 import org.mongodb.scala.MongoCollection
+import org.mongodb.scala.bson.BsonDocument
 import org.mongodb.scala.model.Filters
 import org.mongodb.scala.model.IndexModel
 import org.mongodb.scala.model.IndexOptions
@@ -71,4 +72,7 @@ class NotificationsRepository @Inject() (mongo: MongoComponent)(implicit ec: Exe
 
   def insert(notification: Notification): Future[Unit] =
     collection.insertOne(notification).toFuture.map(_ => ())
+
+  def deleteAll(): Future[Unit] =
+    collection.deleteMany(BsonDocument()).toFuture.map(_ => ())
 }

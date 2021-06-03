@@ -28,6 +28,7 @@ import play.api.libs.json.Reads
 import java.time.OffsetDateTime
 import scala.xml.Elem
 
+import formats.JodaFormats._
 import formats.JsonFormats._
 import formats.XMLFormats._
 
