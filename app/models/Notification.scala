@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 HM Revenue & Customs
+ * Copyright 2023 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ import play.api.libs.json.Reads
 import java.time.OffsetDateTime
 import scala.xml.Elem
 
-import formats.JodaFormats._
+import formats.DateTimeFormats._
 import formats.JsonFormats._
 import formats.XMLFormats._
 

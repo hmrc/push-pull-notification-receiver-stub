@@ -14,15 +14,22 @@
  * limitations under the License.
  */
 
-package models
+package models.formats
 
-import play.api.libs.json.Format
-import play.api.libs.json.Json
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
-import java.util.UUID
+class DateTimeFormatsSpec extends AnyFlatSpec with Matchers {
 
-case class NotificationId(value: UUID) extends AnyVal
+  val expected = "2023-02-01T18:18:31.000+0000"
 
-object NotificationId {
-  implicit val notificationIdFormat: Format[NotificationId] = Json.valueFormat[NotificationId]
+  "corrector" should "not convert a correct date format" in {
+    DateTimeFormats.corrector(expected) shouldBe expected
+  }
+
+  "corrector" should "convert an incorrect date format" in {
+    val input = "2023-02-01T18:18:31.000Z"
+    DateTimeFormats.corrector(input) shouldBe expected
+  }
+
 }

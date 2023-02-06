@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 HM Revenue & Customs
+ * Copyright 2023 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,18 +16,26 @@
 
 package models.formats
 
+import play.api.Logging
 import play.api.libs.json.Reads
 
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
 import play.api.libs.json.Writes
 
-object JodaFormats {
+object DateTimeFormats extends Logging {
   val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSxxxx")
 
   implicit val offsetDateTimeReads: Reads[OffsetDateTime] =
-    Reads.offsetDateTimeReads(formatter)
+    Reads.offsetDateTimeReads(formatter, corrector)
 
   implicit val offsetDateTimeWrites: Writes[OffsetDateTime] =
     Writes.of[String].contramap(formatter.format)
+
+  // TODO: Temporary fix to support invalid formats from push-pull-notification-api 0.73.0
+  def corrector(input: String): String =
+    if (input.endsWith("Z")) {
+      logger.warn(s"Incorrect date-time format has been provided ($input) -- correcting.")
+      formatter.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME.parse(input))
+    } else input
 }

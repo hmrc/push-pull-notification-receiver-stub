@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 HM Revenue & Customs
+ * Copyright 2023 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@ import services.FakeNotificationsService
 import services.NotificationsService
 
 import java.time.OffsetDateTime
+import java.time.temporal.ChronoUnit
 import java.util.UUID
 import scala.annotation.nowarn
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -72,7 +73,7 @@ class NotificationsControllerSpec
         BoxId(UUID.randomUUID),
         Json.toJson(Json.obj()),
         NotificationStatus.Acknowledged,
-        OffsetDateTime.now
+        OffsetDateTime.now.truncatedTo(ChronoUnit.MILLIS)
       )
 
       val fakePostRequest =
@@ -104,7 +105,7 @@ class NotificationsControllerSpec
         BoxId(UUID.randomUUID),
         Json.toJson(Json.obj()),
         NotificationStatus.Acknowledged,
-        OffsetDateTime.now
+        OffsetDateTime.now.truncatedTo(ChronoUnit.MILLIS)
       )
 
       when(mockNotificationsService.saveNotification(notification))
@@ -126,7 +127,7 @@ class NotificationsControllerSpec
         BoxId(UUID.randomUUID),
         Json.toJson(Json.obj()),
         NotificationStatus.Acknowledged,
-        OffsetDateTime.now
+        OffsetDateTime.now.truncatedTo(ChronoUnit.MILLIS)
       )
 
       val fakePostRequest =
