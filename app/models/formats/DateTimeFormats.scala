@@ -23,7 +23,7 @@ import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
 import play.api.libs.json.Writes
 
-object JodaFormats extends Logging {
+object DateTimeFormats extends Logging {
   val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSxxxx")
 
   implicit val offsetDateTimeReads: Reads[OffsetDateTime] =
@@ -37,6 +37,5 @@ object JodaFormats extends Logging {
     if (input.endsWith("Z")) {
       logger.warn(s"Incorrect date-time format has been provided ($input) -- correcting.")
       formatter.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME.parse(input))
-    }
-    else input
+    } else input
 }
