@@ -23,19 +23,21 @@ import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
 import play.api.libs.json.Writes
 
+import java.time.format.DateTimeFormatterBuilder
+import java.time.temporal.ChronoField
+
 object DateTimeFormats extends Logging {
-  val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSxxxx")
+  val formatter = new DateTimeFormatterBuilder()
+    .append(DateTimeFormatter.ISO_LOCAL_DATE)
+    .appendLiteral("T")
+    .appendPattern("HH:mm:ss")
+    .appendFraction(ChronoField.NANO_OF_SECOND, 1, 9, true)
+    .appendOffset("+HHmm", "+0000")
+    .toFormatter
 
   implicit val offsetDateTimeReads: Reads[OffsetDateTime] =
-    Reads.offsetDateTimeReads(formatter, corrector)
+    Reads.offsetDateTimeReads(formatter)
 
   implicit val offsetDateTimeWrites: Writes[OffsetDateTime] =
     Writes.of[String].contramap(formatter.format)
-
-  // TODO: Temporary fix to support invalid formats from push-pull-notification-api 0.73.0
-  def corrector(input: String): String =
-    if (input.endsWith("Z")) {
-      logger.warn(s"Incorrect date-time format has been provided ($input) -- correcting.")
-      formatter.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME.parse(input))
-    } else input
 }
