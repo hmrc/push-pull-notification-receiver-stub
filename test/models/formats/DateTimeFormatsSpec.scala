@@ -19,17 +19,38 @@ package models.formats
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
+import java.time.OffsetDateTime
+import java.time.ZoneOffset
+
 class DateTimeFormatsSpec extends AnyFlatSpec with Matchers {
 
-  val expected = "2023-02-01T18:18:31.000+0000"
+  val expectedMillis = "2023-02-01T18:18:31.123+0000"
+  val expectedNanos  = "2023-02-01T18:18:31.123456789+0100"
 
-  "corrector" should "not convert a correct date format" in {
-    DateTimeFormats.corrector(expected) shouldBe expected
+  "format" should "get the correct time when specified in millis" in {
+    OffsetDateTime.from(DateTimeFormats.formatter.parse(expectedMillis)) shouldBe OffsetDateTime.of(
+      2023,
+      2,
+      1,
+      18,
+      18,
+      31,
+      123000000,
+      ZoneOffset.ofHours(0)
+    )
   }
 
   "corrector" should "convert an incorrect date format" in {
-    val input = "2023-02-01T18:18:31.000Z"
-    DateTimeFormats.corrector(input) shouldBe expected
+    OffsetDateTime.from(DateTimeFormats.formatter.parse(expectedNanos)) shouldBe OffsetDateTime.of(
+      2023,
+      2,
+      1,
+      18,
+      18,
+      31,
+      123456789,
+      ZoneOffset.ofHours(1)
+    )
   }
 
 }
