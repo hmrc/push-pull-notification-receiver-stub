@@ -19,6 +19,7 @@ package repositories
 import models.BoxId
 import models.Notification
 import models.formats.MongoFormats
+import org.mongodb.scala.ObservableFuture
 import org.bson.codecs.configuration.CodecRegistries
 import org.mongodb.scala.MongoClient
 import org.mongodb.scala.MongoCollection
@@ -32,6 +33,7 @@ import uk.gov.hmrc.mongo.play.json.Codecs
 import uk.gov.hmrc.mongo.play.json.CollectionFactory
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
 
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
 import scala.concurrent.ExecutionContext
@@ -49,7 +51,11 @@ class NotificationsRepository @Inject() (mongo: MongoComponent)(implicit ec: Exe
           Indexes.ascending("notificationId"),
           IndexOptions().background(false).unique(true)
         ),
-        IndexModel(Indexes.ascending("boxId"))
+        IndexModel(Indexes.ascending("boxId")),
+        IndexModel(
+          Indexes.ascending("createdDateTime"),
+          IndexOptions().expireAfter(24, TimeUnit.HOURS)
+        )
       )
     ) {
 

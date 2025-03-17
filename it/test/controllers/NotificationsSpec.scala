@@ -17,23 +17,16 @@
 package controllers
 
 import base.WiremockSuite
-import models.BoxId
-import models.JsonNotification
-import models.Notification
-import models.NotificationId
-import models.NotificationStatus
+import models.*
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
-import play.api.http.ContentTypes
-import play.api.http.HeaderNames
-import play.api.http.Status
+import play.api.http.{ContentTypes, HeaderNames, Status}
 import play.api.inject.bind
 import play.api.inject.guice.GuiceableModule
 import play.api.libs.json.Json
 import play.api.libs.ws.WSClient
-import play.api.test.DefaultAwaitTimeout
-import play.api.test.FutureAwaits
+import play.api.test.{DefaultAwaitTimeout, FutureAwaits}
 import repositories.NotificationsRepository
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
@@ -41,6 +34,7 @@ import uk.gov.hmrc.mongo.test.DefaultPlayMongoRepositorySupport
 
 import java.time.OffsetDateTime
 import java.util.UUID
+import play.api.libs.ws.WSBodyWritables.writeableOf_String
 
 class NotificationsSpec
     extends AnyWordSpec
@@ -59,7 +53,7 @@ class NotificationsSpec
 
   lazy val ws: WSClient = app.injector.instanceOf[WSClient]
 
-  override lazy val repository: PlayMongoRepository[Notification] =
+  override protected val repository: PlayMongoRepository[Notification] =
     app.injector.instanceOf[NotificationsRepository]
 
   "GET /notifications/:boxId" should {

@@ -30,7 +30,6 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.util.Failure
 import scala.util.Success
-import scala.util.control.NonFatal
 
 import NotificationsService._
 
@@ -55,7 +54,7 @@ class NotificationsServiceImpl @Inject() (repo: NotificationsRepository)(implici
       case Success(_) =>
         Future.successful(())
 
-      case Failure(NonFatal(e)) =>
+      case Failure(e) =>
         logger.error(
           s"Unexpected error while deleting notifications",
           e
@@ -77,7 +76,7 @@ class NotificationsServiceImpl @Inject() (repo: NotificationsRepository)(implici
 
         Future.successful(Either.left(DuplicateId(e)))
 
-      case Failure(NonFatal(e)) =>
+      case Failure(e) =>
         logger.error(
           s"Unexpected error while inserting notification ${notification.notificationId.value}",
           e

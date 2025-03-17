@@ -16,7 +16,7 @@
 
 package services
 
-import cats.syntax.all._
+import cats.syntax.all.*
 import com.mongodb.MongoWriteException
 import com.mongodb.WriteError
 import models.BoxId
@@ -27,10 +27,11 @@ import org.mongodb.scala.bson.BsonDocument
 import uk.gov.hmrc.mongo.MongoUtils
 
 import java.util.concurrent.ConcurrentHashMap
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters.*
 import scala.concurrent.Future
+import NotificationsService.*
 
-import NotificationsService._
+import java.util.Collections
 
 case class FakeNotificationsService(initialData: Map[NotificationId, Notification])
     extends NotificationsService {
@@ -38,13 +39,15 @@ case class FakeNotificationsService(initialData: Map[NotificationId, Notificatio
   private val localServerAddress: ServerAddress =
     ServerAddress("localhost", 27017)
 
-  private val duplicateKeyError: DuplicateId =
+  private val duplicateKeyError: DuplicateId = {
     DuplicateId(
       new MongoWriteException(
-        new WriteError(MongoUtils.DuplicateKey.Code, "Duplicate key error", BsonDocument()),
-        localServerAddress
+        WriteError(MongoUtils.DuplicateKey.Code, "Duplicate key error", BsonDocument()),
+        localServerAddress,
+        Collections.emptySet()
       )
     )
+  }
 
   private val data: ConcurrentHashMap[NotificationId, Notification] =
     new ConcurrentHashMap(initialData.asJava)

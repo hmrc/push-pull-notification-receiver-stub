@@ -22,22 +22,22 @@ import models.Notification
 import models.NotificationId
 import models.NotificationStatus
 import models.XMLNotification
-import org.mockito.scalatest.MockitoSugar
+import org.mockito.Mockito.when
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
+import org.scalatestplus.mockito.MockitoSugar
 import play.api.http.Status
 import play.api.libs.json.Json
 import play.api.test.FakeRequest
 import play.api.test.Helpers
-import play.api.test.Helpers._
+import play.api.test.Helpers.*
 import services.FakeNotificationsService
 import services.NotificationsService
 
 import java.time.OffsetDateTime
 import java.time.temporal.ChronoUnit
 import java.util.UUID
-import scala.annotation.nowarn
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
@@ -54,7 +54,6 @@ class NotificationsControllerSpec
     Helpers.stubControllerComponents()
   )
 
-  @nowarn
   override protected def beforeEach(): Unit = {
     await(notificationsService.deleteNotifications())
   }

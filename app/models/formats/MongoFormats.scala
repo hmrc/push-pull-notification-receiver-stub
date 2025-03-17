@@ -18,18 +18,38 @@ package models
 package formats
 
 import play.api.http.MimeTypes
-import play.api.libs.json.JsObject
-import play.api.libs.json.JsPath
-import play.api.libs.json.Json
-import play.api.libs.json.OFormat
-import play.api.libs.json.OWrites
-import play.api.libs.json.Reads
+import play.api.libs.json.{Format, JsObject, JsPath, Json, OFormat, OWrites, Reads, Writes, __}
 import uk.gov.hmrc.mongo.play.json.formats.MongoJavatimeFormats
+import JsonFormats.*
+import XMLFormats.*
 
-import JsonFormats._
-import XMLFormats._
+import java.time.{Instant, LocalDateTime, OffsetDateTime, ZoneOffset}
 
 object MongoFormats extends MongoJavatimeFormats {
+
+  final val localDateTimeReads: Reads[LocalDateTime] =
+    Reads
+      .at[String](__ \ "$date" \ "$numberLong")
+      .map(dateTime => Instant.ofEpochMilli(dateTime.toLong).atZone(ZoneOffset.UTC).toLocalDateTime)
+
+  implicit val offsetDateTimeReads: Reads[OffsetDateTime] = Reads { value =>
+    localDateTimeReads
+      .reads(value)
+      .map(localDateTime => localDateTime.atOffset(ZoneOffset.UTC))
+  }
+
+  final val localDateTimeWrites: Writes[LocalDateTime] =
+    Writes
+      .at[String](__ \ "$date" \ "$numberLong")
+      .contramap(_.toInstant(ZoneOffset.UTC).toEpochMilli.toString)
+
+  implicit val offsetDateTimeWrites: Writes[OffsetDateTime] = Writes { value =>
+    localDateTimeWrites.writes(value.toLocalDateTime)
+  }
+
+  implicit val offsetDateTimeFormat: Format[OffsetDateTime] =
+    Format.apply(offsetDateTimeReads, offsetDateTimeWrites)
+
   implicit val jsonNotificationReads: Reads[JsonNotification] =
     Json.reads[JsonNotification]
   implicit val jsonNotificationWrites: OWrites[JsonNotification] =

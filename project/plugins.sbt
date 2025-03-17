@@ -7,11 +7,10 @@ resolvers += Resolver.url(
 
 resolvers += Resolver.typesafeRepo("releases")
 
-addSbtPlugin("uk.gov.hmrc"               % "sbt-auto-build"     % "3.0.0")
-addSbtPlugin("uk.gov.hmrc"               % "sbt-git-versioning" % "2.2.0")
-addSbtPlugin("uk.gov.hmrc"               % "sbt-distributables" % "2.1.0")
-addSbtPlugin("com.typesafe.play"         % "sbt-plugin"         % "2.8.15")
-addSbtPlugin("com.timushev.sbt"          % "sbt-updates"        % "0.5.3")
-addSbtPlugin("org.scalameta"             % "sbt-scalafmt"       % "2.4.2")
-addSbtPlugin("org.scoverage"             % "sbt-scoverage"      % "1.8.1")
-addSbtPlugin("io.github.davidgregory084" % "sbt-tpolecat"       % "0.1.19")
+addSbtPlugin("uk.gov.hmrc"               % "sbt-auto-build"     % "3.24.0")
+addSbtPlugin("uk.gov.hmrc"               % "sbt-distributables" % "2.6.0")
+addSbtPlugin("org.playframework"         % "sbt-plugin"         % "3.0.6")
+addSbtPlugin("org.scoverage"             % "sbt-scoverage"      % "2.2.2")
+addSbtPlugin("org.scalameta"             % "sbt-scalafmt"       % "2.4.6")
+addSbtPlugin("io.github.davidgregory084" % "sbt-tpolecat"       % "0.1.20")
+addSbtPlugin("com.timushev.sbt"          % "sbt-updates"        % "0.6.0")

@@ -1,7 +1,7 @@
 
 # push-pull-notification-receiver-stub
 
-This is a placeholder README.md for a new repository
+Service used to simulate the push-pull notification service.
 
 ### License
 
