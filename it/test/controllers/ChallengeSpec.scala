@@ -17,15 +17,13 @@
 package controllers
 
 import base.WiremockSuite
+import models.{Challenge, ChallengeResponse}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
-import play.api.test.DefaultAwaitTimeout
-import play.api.test.FutureAwaits
-import play.api.libs.ws.WSClient
 import play.api.http.Status
-import models.ChallengeResponse
-import models.Challenge
+import play.api.libs.ws.WSClient
+import play.api.test.{DefaultAwaitTimeout, FutureAwaits}
 
 class ChallengeSpec
     extends AnyWordSpec

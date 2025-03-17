@@ -16,11 +16,12 @@
 
 package repositories
 
-import cats.syntax.all._
+import cats.syntax.all.*
 import com.mongodb.MongoWriteException
 import models.BoxId
 import models.JsonNotification
 import models.Notification
+import org.mongodb.scala.ObservableFuture
 import models.NotificationId
 import models.NotificationStatus
 import models.XMLNotification
@@ -32,6 +33,7 @@ import play.api.test.FutureAwaits
 import uk.gov.hmrc.mongo.test.DefaultPlayMongoRepositorySupport
 
 import java.time.OffsetDateTime
+import java.time.temporal.ChronoUnit
 import java.util.UUID
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -42,7 +44,7 @@ class NotificationsRepositorySpec
     with DefaultAwaitTimeout
     with FutureAwaits {
 
-  override protected lazy val repository: NotificationsRepository =
+  override protected val repository: NotificationsRepository =
     new NotificationsRepository(mongoComponent)
 
   "NotificationsRepository.find" should {
@@ -56,7 +58,7 @@ class NotificationsRepositorySpec
         BoxId(UUID.randomUUID),
         Json.toJson(Json.obj()),
         NotificationStatus.Acknowledged,
-        OffsetDateTime.now
+        OffsetDateTime.now.truncatedTo(ChronoUnit.MILLIS)
       )
 
       await(repository.find(notification.boxId)) shouldBe Seq.empty
@@ -75,21 +77,21 @@ class NotificationsRepositorySpec
         boxId1,
         Json.toJson(Json.obj()),
         NotificationStatus.Acknowledged,
-        OffsetDateTime.now
+        OffsetDateTime.now.truncatedTo(ChronoUnit.MILLIS)
       )
       val notification2: Notification = XMLNotification(
         NotificationId(UUID.randomUUID),
         boxId1,
         <test/>,
         NotificationStatus.Acknowledged,
-        OffsetDateTime.now
+        OffsetDateTime.now.truncatedTo(ChronoUnit.MILLIS)
       )
       val notification3: Notification = JsonNotification(
         NotificationId(UUID.randomUUID),
         boxId2,
         Json.toJson(Json.obj()),
         NotificationStatus.Acknowledged,
-        OffsetDateTime.now
+        OffsetDateTime.now.truncatedTo(ChronoUnit.MILLIS)
       )
 
       await(List(notification1, notification2, notification3).traverse(repository.insert))

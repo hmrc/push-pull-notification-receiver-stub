@@ -17,12 +17,11 @@
 package services
 
 import models.BoxId
-import org.mockito.scalatest.MockitoSugar
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import repositories.NotificationsRepository
 
-import java.util.UUID
+import java.util.{Collections, UUID}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import play.api.test.FutureAwaits
@@ -31,12 +30,15 @@ import models.Notification
 import models.XMLNotification
 import models.NotificationId
 import models.NotificationStatus
+
 import java.time.OffsetDateTime
 import com.mongodb.MongoWriteException
 import com.mongodb.WriteError
+import org.mockito.Mockito.when
 import uk.gov.hmrc.mongo.MongoUtils
 import org.mongodb.scala.bson.BsonDocument
 import org.mongodb.scala.ServerAddress
+import org.scalatestplus.mockito.MockitoSugar
 
 class NotificationsServiceSpec
     extends AnyWordSpec
@@ -59,28 +61,29 @@ class NotificationsServiceSpec
 
     "delegate getNotifications call to repository" in {
       val boxId = BoxId(UUID.randomUUID)
-      when(mockRepository.find(boxId)) thenReturn Future.successful(Seq.empty)
+      when(mockRepository.find(boxId)).thenReturn(Future.successful(Seq.empty))
 
       await(service.getNotifications(boxId)) shouldBe Seq.empty
 
-      when(mockRepository.find(boxId)) thenReturn Future.successful(Seq(notification))
+      when(mockRepository.find(boxId)).thenReturn(Future.successful(Seq(notification)))
 
       await(service.getNotifications(boxId)) shouldBe Seq(notification)
     }
 
     "return unit value for successful insert" in {
-      when(mockRepository.insert(notification)) thenReturn Future.successful(())
+      when(mockRepository.insert(notification)).thenReturn(Future.successful(()))
 
       await(service.saveNotification(notification)) shouldBe Right(())
     }
 
     "convert duplicate key error to NotificationsService.DuplicateId" in {
       val mongoError = new MongoWriteException(
-        new WriteError(MongoUtils.DuplicateKey.Code, "Duplicate key error", BsonDocument()),
-        ServerAddress("localhost", 27017)
+        WriteError(MongoUtils.DuplicateKey.Code, "Duplicate key error", BsonDocument()),
+        ServerAddress("localhost", 27017),
+        Collections.emptySet()
       )
 
-      when(mockRepository.insert(notification)) thenReturn Future.failed(mongoError)
+      when(mockRepository.insert(notification)).thenReturn(Future.failed(mongoError))
 
       await(service.saveNotification(notification)) shouldBe Left(
         NotificationsService.DuplicateId(mongoError)
@@ -88,8 +91,10 @@ class NotificationsServiceSpec
     }
 
     "rethrow unexpected exceptions when inserting notifications" in {
-      when(mockRepository.insert(notification)) thenReturn Future.failed(
-        new RuntimeException("kaboom")
+      when(mockRepository.insert(notification)).thenReturn(
+        Future.failed(
+          new RuntimeException("kaboom")
+        )
       )
 
       intercept[RuntimeException] {
@@ -98,8 +103,10 @@ class NotificationsServiceSpec
     }
 
     "rethrow unexpected exceptions when deleting notifications" in {
-      when(mockRepository.deleteAll()) thenReturn Future.failed(
-        new RuntimeException("kaboom")
+      when(mockRepository.deleteAll()).thenReturn(
+        Future.failed(
+          new RuntimeException("kaboom")
+        )
       )
 
       intercept[RuntimeException] {

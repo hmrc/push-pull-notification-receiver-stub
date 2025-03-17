@@ -1,63 +1,47 @@
-import play.sbt.routes.RoutesKeys
-import scoverage.ScoverageKeys
 import uk.gov.hmrc.DefaultBuildSettings
-import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin
+import play.sbt.routes.RoutesKeys
+
 
 val appName = "push-pull-notification-receiver-stub"
 
+ThisBuild / majorVersion := 0
+ThisBuild / scalaVersion := "3.6.4"
+
 lazy val microservice = Project(appName, file("."))
-  .enablePlugins(play.sbt.PlayScala, SbtAutoBuildPlugin, SbtGitVersioning, SbtDistributablesPlugin)
-  .disablePlugins(
-    JUnitXmlReportPlugin
-  ) //Required to prevent https://github.com/scalatest/scalatest/issues/1427
-  .configs(IntegrationTest)
-  .settings(SbtDistributablesPlugin.publishingSettings)
-  .settings(DefaultBuildSettings.integrationTestSettings())
-  .settings(inConfig(Test)(testReportSettings))
-  .settings(inConfig(IntegrationTest)(testReportSettings))
-  .settings(inConfig(IntegrationTest)(ScalafmtPlugin.scalafmtConfigSettings))
-  .settings(scalacSettings)
-  .settings(scoverageSettings)
+  .enablePlugins(play.sbt.PlayScala, SbtDistributablesPlugin)
   .settings(
-    majorVersion := 0,
-    scalaVersion := "2.12.13",
-    resolvers += Resolver.jcenterRepo,
+    PlayKeys.playDefaultPort := 10202,
     libraryDependencies ++= AppDependencies.compile ++ AppDependencies.test,
-    RoutesKeys.routesImport ++= Seq("models._"),
-    PlayKeys.playDefaultPort := 10202
+    scalacOptions += "-Wconf:src=routes/.*:s",
+    scalacOptions += "-Wconf:msg=Flag.*repeatedly:s",
+    scalacOptions += "-Xfatal-warnings",
+      RoutesKeys.routesImport ++= Seq("models._"),
+    scalacOptions := scalacOptions.value.map {
+      case "-Ykind-projector" => "-Xkind-projector"
+      case option             => option
+    }
+  )
+  .settings(resolvers += Resolver.jcenterRepo)
+  .settings(CodeCoverageSettings.settings*)
+  .settings(inThisBuild(buildSettings))
+
+lazy val it = project
+  .enablePlugins(PlayScala)
+  .dependsOn(microservice % "test->test") // the "test->test" allows reusing test code and test dependencies
+  .settings(DefaultBuildSettings.itSettings())
+  .settings(
+    libraryDependencies ++= AppDependencies.test
+  )
+  .settings(
+    scalacOptions += "-Wconf:msg=Flag.*repeatedly:s",
+    scalacOptions := scalacOptions.value.map {
+      case "-Ykind-projector" => "-Xkind-projector"
+      case option             => option
+    }
   )
 
-lazy val scalacSettings = Def.settings(
-  scalacOptions += "-Wconf:src=routes/.*:silent",
-  scalacOptions ~= { opts => opts.filterNot(Set("-Xlint")) }
-)
+  .settings(CodeCoverageSettings.settings*)
 
-// Scoverage exclusions and minimums
-lazy val scoverageSettings = Def.settings(
-  ScoverageKeys.coverageMinimumStmtTotal := 88,
-  ScoverageKeys.coverageFailOnMinimum := true,
-  ScoverageKeys.coverageHighlighting := true,
-  ScoverageKeys.coverageExcludedFiles := Seq(
-    "<empty>",
-    ".*javascript.*",
-    ".*Routes.*"
-  ).mkString(";"),
-  ScoverageKeys.coverageExcludedPackages := Seq(
-    """uk\.gov\.hmrc\.BuildInfo*""",
-    """.*\.Routes""",
-    """.*\.RoutesPrefix""",
-    """.*\.Reverse[^.]*""",
-    """config\.*"""
-  ).mkString(";")
-)
-
-// Disable test reports outside of CI
-lazy val testReportSettings = Def.settings(
-  testOptions ~= { opts =>
-    if (sys.env.get("JENKINS_HOME").nonEmpty) {
-      opts
-    } else {
-      Seq.empty
-    }
-  }
+lazy val buildSettings = Def.settings(
+  scalafmtOnCompile := true
 )

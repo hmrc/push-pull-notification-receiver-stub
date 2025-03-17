@@ -31,9 +31,7 @@ import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import javax.inject.Inject
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
-import scala.util.Failure
 import scala.util.Success
-import scala.util.control.NonFatal
 
 class NotificationsController @Inject() (
   notificationsService: NotificationsService,
@@ -46,10 +44,10 @@ class NotificationsController @Inject() (
     notificationsService.getNotifications(boxId).map(results => Ok(Json.toJson(results)))
   }
 
-  def deleteNotifications: Action[AnyContent] = Action.async { _ =>
+  def deleteNotifications(): Action[AnyContent] = Action.async { _ =>
     notificationsService.deleteNotifications().transformWith {
-      case Success(_)           => Future.successful(Accepted)
-      case Failure(NonFatal(_)) => Future.successful(InternalServerError)
+      case Success(_) => Future.successful(Accepted)
+      case _          => Future.successful(InternalServerError)
     }
   }
 
@@ -60,7 +58,7 @@ class NotificationsController @Inject() (
       notificationsService.saveNotification(notification).transformWith {
         case Success(Right(_))             => Future.successful(Ok)
         case Success(Left(DuplicateId(_))) => Future.successful(Conflict)
-        case Failure(NonFatal(_))          => Future.successful(InternalServerError)
+        case _                             => Future.successful(InternalServerError)
       }
     }
   }
