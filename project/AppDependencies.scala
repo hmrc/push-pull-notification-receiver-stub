@@ -11,7 +11,7 @@ object AppDependencies {
 
   val test: Seq[ModuleID] = Seq(
     "org.scalacheck"        %% "scalacheck"              % "1.18.1",
-    "org.mockito"            % "mockito-core"            % "5.16.1",
+    "org.mockito"            % "mockito-core"            % "5.24.0",
     "org.scalatestplus"     %% "mockito-5-12"            % "3.2.19.0",
     "org.scalacheck"        %% "scalacheck"              % "1.18.1",
     "org.scalatestplus"     %% "scalacheck-1-18"         % "3.2.19.0",
